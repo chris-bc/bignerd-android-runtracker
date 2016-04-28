@@ -3,6 +3,7 @@ package au.id.bennettscash.runtracker;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.CursorAdapter;
@@ -99,6 +100,11 @@ public class RunListFragment extends ListFragment {
             TextView startDateTextView = (TextView)view;
             String cellText = context.getString(R.string.cell_text, run.getStartDate());
             startDateTextView.setText(cellText);
+            if (RunManager.get(context).isTrackingRun(run)) {
+                startDateTextView.setBackgroundColor(Color.RED);
+            } else {
+                startDateTextView.setBackgroundColor(Color.WHITE);
+            }
         }
     }
 }
