@@ -1,11 +1,15 @@
 package au.id.bennettscash.runtracker;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 /**
@@ -95,12 +99,33 @@ public class RunManager {
         mPrefs.edit().putLong(PREF_CURRENT_RUN_ID, mCurrentRunId).commit();
         // Start location updates
         startLocationUpdates();
+
+        // Add a notification
+        Intent i = new Intent(mAppContext, RunActivity.class);
+        i.putExtra(RunActivity.EXTRA_RUN_ID, run.getId());
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mAppContext)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("You're being watched")
+                .setContentText("RunTracker is tracking you")
+                .setOngoing(true);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mAppContext);
+        stackBuilder.addParentStack(RunActivity.class);
+        stackBuilder.addNextIntent(i);
+        PendingIntent pi = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(pi);
+        NotificationManager notificationManager = (NotificationManager)mAppContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(666, builder.build());
     }
 
     public void stopRun() {
         stopLocationUpdates();
         mCurrentRunId = -1;
         mPrefs.edit().remove(PREF_CURRENT_RUN_ID).commit();
+
+        // Cancel notification if one exists
+        NotificationManager notificationManager = (NotificationManager)mAppContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(666);
     }
 
     private Run insertRun() {
