@@ -180,6 +180,10 @@ public class RunManager {
         return location;
     }
 
+    public RunDatabaseHelper.LocationCursor queryLocationsForRun(long runId) {
+        return mHelper.queryLocationsForRun(runId);
+    }
+
     public boolean isTrackingRun(Run run) {
         return run != null && run.getId() == mCurrentRunId;
     }
