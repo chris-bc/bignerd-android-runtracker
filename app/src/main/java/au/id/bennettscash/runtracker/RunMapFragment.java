@@ -1,5 +1,8 @@
 package au.id.bennettscash.runtracker;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.location.Location;
@@ -10,6 +13,7 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -31,6 +35,28 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
 
     private GoogleMap googleMap;
     private RunDatabaseHelper.LocationCursor locationCursor;
+    private long runId;
+    private RunMapFragment _me = this;
+
+    private BroadcastReceiver locationReceiver = new LocationReceiver() {
+        @Override
+        protected void onLocationReceived(Context context, Location loc) {
+            if (!RunManager.get(getContext()).isTrackingRun())
+                return;
+            if (isVisible() && runId != -1) {
+                // Clean up UI
+                googleMap.clear();
+                locationCursor.requery();
+                updateUI();
+            }
+        }
+
+        @Override
+        protected void onProviderEnabledChanged(boolean enabled) {
+            int toastText = enabled ? R.string.gps_enabled : R.string.gps_disabled;
+            Toast.makeText(getActivity(), toastText, Toast.LENGTH_LONG).show();
+        }
+    };
 
     public static RunMapFragment newInstance(long runId) {
         Bundle args = new Bundle();
@@ -38,6 +64,18 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
         RunMapFragment rf = new RunMapFragment();
         rf.setArguments(args);
         return rf;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        getActivity().registerReceiver(locationReceiver, new IntentFilter(RunManager.ACTION_LOCATION));
+    }
+
+    @Override
+    public void onStop() {
+        getActivity().unregisterReceiver(locationReceiver);
+        super.onStop();
     }
 
     @Override
@@ -59,7 +97,7 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
         // Check for a run ID as an argument, and find the run
         Bundle args = getArguments();
         if (args != null) {
-            long runId = args.getLong(ARG_RUN_ID, -1);
+            runId = args.getLong(ARG_RUN_ID, -1);
             if (runId != -1) {
                 LoaderManager lm = getLoaderManager();
                 lm.initLoader(LOAD_LOCATIONS, args, this);
@@ -118,8 +156,8 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        long runId = args.getLong(ARG_RUN_ID, -1);
-        return new LocationListCursorLoader(getActivity(), runId);
+        long thisRunId = args.getLong(ARG_RUN_ID, -1);
+        return new LocationListCursorLoader(getActivity(), thisRunId);
     }
 
     @Override

@@ -125,7 +125,7 @@ public class RunListFragment extends ListFragment implements LoaderManager.Loade
             if (RunManager.get(context).isTrackingRun(run)) {
                 startDateTextView.setBackgroundColor(Color.RED);
             } else {
-                startDateTextView.setBackgroundColor(Color.WHITE);
+                startDateTextView.setBackgroundColor(Color.BLACK);
             }
         }
     }
